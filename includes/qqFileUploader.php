@@ -7,6 +7,8 @@ class qqFileUploader {
     public $inputName 			= 'file';
     public $enable_chunked		= FALSE;
     public $chunksFolder 		= 'chunks';
+    public $cleanupTargetDir	= TRUE;
+    public $maxFileAge			= NULL;
 
     public $chunksCleanupProbability = 0.001; // Once in 1000 requests on avg
     public $chunksExpireIn = 604800; // One week
@@ -198,7 +200,7 @@ class qqFileUploader {
         $ext = isset($pathinfo['extension']) ? $pathinfo['extension'] : '';
 
         if($this->allowedExtensions && !in_array(strtolower($ext), array_map("strtolower", $this->allowedExtensions))){
-            $these = implode(', ', 'png');
+            $these = implode(', ', $this->allowedExtensions);
             return array(
             	'result' 	=> 'error',
             	'file_uid'	=> $uuid,
@@ -208,6 +210,21 @@ class qqFileUploader {
             	)
             );
         }
+        
+        // Remove old temp files	
+		if ($this->cleanupTargetDir && is_dir($uploadDirectory) && ($dir = opendir($uploadDirectory))) {
+			$this->maxFileAge = 5 * 3600; // Temp file age in seconds (5 hrs)
+			while (($file = readdir($dir)) !== false) {
+				$tmpfilePath = $uploadDirectory . DIRECTORY_SEPARATOR . $file;
+		
+				// Remove temp file if it is older than the max age and is not the current file
+				if ((filemtime($tmpfilePath) < time() - $this->maxFileAge) && ($tmpfilePath != "{$name}.part")) {
+					@unlink($tmpfilePath);
+				}
+			}
+		
+			closedir($dir);
+		}
         
         // Save a chunk
 
