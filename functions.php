@@ -748,7 +748,7 @@ class PrsoGformsPluploaderFunctions extends PrsoGformsPluploaderAppController {
 					?>
 					jQuery("#<?php echo $uploader_args['element']; ?>").plupload({
 						// General settings
-						runtimes : 'html5,browserplus,silverlight,gears,html4',
+						runtimes : 'flash,html5,browserplus,silverlight,gears,html4',
 						url : '<?php echo admin_url('admin-ajax.php'); ?>',
 						max_file_size : '<?php 
 							//Add validation options
