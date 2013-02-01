@@ -21,6 +21,7 @@ class PrsoGformsPluploaderFunctions extends PrsoGformsPluploaderAppController {
 	private static $prso_pluploader_tmp_dir_name 	= 'prso-pluploader-tmp';
 	private static $submit_nonce_key 				= 'prso-pluploader-loader-submit-nonce';
 	private static $encrypt_key						= '4ddRp]4X5}R-WU';
+	private $move_div = array();
 	
 	//Gforms meta keys
 	private static $delete_files_meta_key		= 'prso-pluploader-delete-files';
@@ -488,11 +489,14 @@ class PrsoGformsPluploaderFunctions extends PrsoGformsPluploaderAppController {
 	        );
 			
 			//Cache the div element used by Fine Uploader jquery plugin
-			$input.= sprintf(
+			$plupload_container = sprintf(
 				"<div id='pluploader_%s'></div></div>",
 				$field["id"]
 			);
-	
+			
+			//Run through filter to allow devs to move the div outside the form it they wish
+			$input.= apply_filters( 'prso_gform_pluploader_container', $plupload_container, $field, $form_id );
+			
 	    }
 	    
 	    return $input;
@@ -822,10 +826,10 @@ class PrsoGformsPluploaderFunctions extends PrsoGformsPluploaderAppController {
 									
 									
 								} else if( obj.result === 'success' ) {
-								
-									var inputField = '<input id="gform-plupload-'+ obj.uid +'" type="hidden" name="plupload[<?php echo $field_id; ?>][]" value="'+ obj.success.file_id +'"/>';
 									
-									jQuery('form').append(inputField);
+									var inputField = '<input id="gform-plupload-'+ obj.file_uid +'" type="hidden" name="plupload[<?php echo $field_id; ?>][]" value="'+ obj.success.file_id +'"/>';
+									
+									jQuery('#gform_<?php echo $uploader_args['form_id']; ?>').append(inputField);
 									
 								} else {
 									
@@ -839,6 +843,12 @@ class PrsoGformsPluploaderFunctions extends PrsoGformsPluploaderAppController {
 									
 								}
 								
+							},
+							FilesRemoved: function(up, files) {
+								
+								//Remove hidden gforms input for this file
+								jQuery("#gform-plupload-" + files[0].id).remove();
+							
 							}
 						}
 						
