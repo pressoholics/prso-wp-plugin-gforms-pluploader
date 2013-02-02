@@ -358,14 +358,14 @@ class qqFileUploader {
 	        $file_info = $this->getUniqueTargetPath($uploadDirectory, $name);
 	        $uuid = current( explode('.', $name) );
 	        
-	        if( isset($file_info['file_name'], $file_info['file_path']) ) {
+	        if( isset($file_info['file_name'], $file_info['file_path'], $_FILES[$this->inputName]['tmp_name']) ) {
 		        
 		        $target = $file_info['file_path'];
 
 	            if ($target){
 	                $this->uploadName = basename($target);
-	
-	                if (move_uploaded_file($file['tmp_name'], $target)){
+
+	                if (move_uploaded_file($_FILES[$this->inputName]['tmp_name'], $target)){
 	                    return array(
 			            	'result' 	=> 'success',
 			            	'file_uid'	=> $uuid,
