@@ -36,9 +36,6 @@ class PrsoGformsPluploaderFunctions extends PrsoGformsPluploaderAppController {
  		//Hook into WP admin_init
  		$this->admin_init();
  		
- 		//Hook into WP save_post
- 		$this->save_post();
- 		
 	}
 	
 	/**
@@ -69,22 +66,6 @@ class PrsoGformsPluploaderFunctions extends PrsoGformsPluploaderAppController {
 		
 		//*** ADD CUSTOM ACTIONS HERE ***//
 
-		
-	}
-	
-	/**
-	* save_post
-	* 
-	* Called in __construct() to fire any methods for
-	* WP Action Hook 'save_post'
-	* 
-	* @access 	private
-	* @author	Ben Moody
-	*/
-	private function save_post() {
-		
-		//Call wp function to setup saving meta box
-		add_action( 'save_post', array( $this, 'save_fields' ) );
 		
 	}
 	
@@ -235,171 +216,6 @@ class PrsoGformsPluploaderFunctions extends PrsoGformsPluploaderAppController {
 		//Filter the html used to create the entry index table bulk action button
 		add_filter( 'gform_entry_apply_button', array($this, 'pluploader_entry_apply_button'), 10, 1 );
 		
-	}
-	
-	public function pluploader_delete_lead( $lead_id ) {
-		
-		//Init vars
-		$delete_files 			= FALSE;
-		$attachments			= array();
-		$file_attachment_ids 	= array();
-		$form_id				= NULL;
-		$form 					= array();
-		$field_ids				= array();
-			
-		if( isset($lead_id) && isset($_GET['id']) ) {
-			
-			//First check if we should delete entry files
-			$delete_files = $this->delete_files_check();
-			
-			if( $delete_files === TRUE ) {
-				
-				$form_id = (int) $_GET['id'];
-			
-				$form = RGFormsModel::get_form_meta($form_id);
-				
-				if( isset($form['fields']) ) {
-					
-					//Loop fields and see if this entry's form has a pluploader field
-					foreach( $form['fields'] as $field ) {
-						if( $field['type'] === 'prso_gform_pluploader' ) {
-							$field_ids[] = $field['id'];
-						}
-					}
-					
-				}
-				
-				//Loop any pluploader fields and get any uploads, then delete the wp attachements for each
-				if( !empty($field_ids) ) {
-					foreach( $field_ids as $field_id ) {
-						$attachments[] = $this->get_lead_detail_long_value( $lead_id, $field_id );
-					}
-				}
-				
-				//Now loop through each file attachment id and force delete them
-				if( !empty($attachments) ) {
-					foreach( $attachments as $attachment ) {
-						if( is_array($attachment) ) {
-							foreach( $attachment as $attachment_id ) {
-								wp_delete_attachment( $attachment_id, TRUE );
-							}
-						}
-					}
-				}
-				
-			}
-			
-		}
-		
-	}
-	
-	private function delete_files_check() {
-		
-		//First check for confirmation in post array
-		if( isset($_POST['prso_pluploader_delete_uploads']) && $_POST['prso_pluploader_delete_uploads'] === 'on' ) {
-			return TRUE;
-		}
-		
-		return FALSE;
-	}
-	
-	private function get_lead_detail_long_value( $lead_id = NULL, $field_id = NULL ) {
-		
-		//Init vars
-		global $wpdb;
-		$lead_detail_id = NULL;
-		$results 		= NULL;
-		
-		if( isset($lead_id, $field_id) ) {
-			
-			$lead_details_table_name =  RGFormsModel::get_lead_details_table_name();
-	        $lead_details_long_table_name =  RGFormsModel::get_lead_details_long_table_name();
-	        
-	        $lead_detail_id = $wpdb->get_results(
-	        	"SELECT lead_detail_id FROM {$lead_details_table_name} d
-	        	 INNER JOIN {$lead_details_long_table_name} l ON d.id = l.lead_detail_id
-	        	 WHERE lead_id = {$lead_id} AND field_number = {$field_id}"
-	        );
-			
-			if( isset($lead_detail_id[0]->lead_detail_id) ) {
-			
-				$lead_detail_id = $lead_detail_id[0]->lead_detail_id;
-				
-				$results = $wpdb->get_results(
-		        	"SELECT $lead_details_long_table_name.value FROM {$lead_details_long_table_name}
-		        	 WHERE lead_detail_id = {$lead_detail_id}"
-		        );
-			}
-			
-			if( isset($results[0]->value) ) {
-				$results = maybe_unserialize( $results[0]->value );
-			}
-			
-		}
-		
-		return $results;
-	}
-	
-	public function pluploader_trash_checkbox( $lead_id, $property_value, $previous_value ) {
-		
-		if( isset($property_value) && $property_value === 'trash' ) {
-			
-			if( isset($_POST['prso_pluploader_delete_uploads']) && $_POST['prso_pluploader_delete_uploads'] === 'on' ) {
-				//Update delete file meta for this entry
-				gform_update_meta( $lead_id, self::$delete_files_meta_key, 'checked' );
-			} else {
-				//Update delete file meta for this entry
-				gform_delete_meta( $lead_id, self::$delete_files_meta_key );
-			}
-			
-		}
-		
-	}
-	
-	private function localize_script_prso_pluploader_entries() {
-		
-		//Init vars
-		$message		= __("NOT deleting uploaded files. To delete any uploaded files, be sure to check Delete Uploads", "prso_gform_pluploader");	
-		$delete_files 	= NULL;
-		$entry_id 		= NULL;
-		
-		//Get entry meta for delete files option
-		if( isset($_GET['lid']) ) {
-			$entry_id = (int) $_GET['lid'];
-		}
-		
-		$delete_files = gform_get_meta( $entry_id, self::$delete_files_meta_key );
-		
-		wp_localize_script( 
-			'prso-pluploader-entries', 
-			'prso_gforms_pluploader', 
-			array('file_delete_message' => $message, 'file_delete_meta' => esc_attr($delete_files)) 
-		);
-		
-	}
-	
-	public function pluploader_entry_apply_button( $apply_button_html = NULL ) {
-		
-		//Init vars
-		$output 	= NULL;
-		$message	= __("Are You sure? Uploaded files will be deleted! To keep files for an entry, delete that specific entry only, don\'t use Bulk Action.", "prso_gform_pluploader");
-		$on_click	= "if(jQuery('#bulk_action').val() === 'trash'){ if(!confirm('". $message ."')){return false;} }return handleBulkApply('bulk_action');";
-		
-		$output = $apply_button_html;
-		
-		if( isset($apply_button_html) ) {
-			
-			//Cache the html
-			ob_start();
-			?>
-			<input type="submit" class="button" value="<?php _e("Apply", "gravityforms"); ?>" onclick="<?php echo $on_click; ?>" />
-			<?php
-			$output = ob_get_contents();
-			ob_end_clean();
-
-		}
-		
-		return $output;
 	}
 	
 	
@@ -1511,6 +1327,243 @@ class PrsoGformsPluploaderFunctions extends PrsoGformsPluploaderAppController {
 		}
 		
 		return $value;
+	}
+	
+	/**
+	* pluploader_delete_lead
+	* 
+	* Called by 'gform_delete_lead' gravity forms action.
+	* Called when a gform entry is deleted.
+	* Detects if the form contains any plupload fields, gets the wp attachment post id's
+	* for each upload. then calls wp_delete_attachment to remove file from media library & server
+	* 
+	* @access 	public
+	* @author	Ben Moody
+	*/
+	public function pluploader_delete_lead( $lead_id ) {
+		
+		//Init vars
+		$delete_files 			= FALSE;
+		$attachments			= array();
+		$file_attachment_ids 	= array();
+		$form_id				= NULL;
+		$form 					= array();
+		$field_ids				= array();
+			
+		if( isset($lead_id) && isset($_GET['id']) ) {
+			
+			//First check if we should delete entry files
+			$delete_files = $this->delete_files_check( $lead_id );
+			
+			if( $delete_files === TRUE ) {
+				
+				$form_id = (int) $_GET['id'];
+			
+				$form = RGFormsModel::get_form_meta($form_id);
+				
+				if( isset($form['fields']) ) {
+					
+					//Loop fields and see if this entry's form has a pluploader field
+					foreach( $form['fields'] as $field ) {
+						if( $field['type'] === 'prso_gform_pluploader' ) {
+							$field_ids[] = $field['id'];
+						}
+					}
+					
+				}
+				
+				//Loop any pluploader fields and get any uploads, then delete the wp attachements for each
+				if( !empty($field_ids) ) {
+					foreach( $field_ids as $field_id ) {
+						$attachments[] = $this->get_lead_detail_long_value( $lead_id, $field_id );
+					}
+				}
+				
+				//Now loop through each file attachment id and force delete them
+				if( !empty($attachments) ) {
+					foreach( $attachments as $attachment ) {
+						if( is_array($attachment) ) {
+							foreach( $attachment as $attachment_id ) {
+								wp_delete_attachment( $attachment_id, TRUE );
+							}
+						}
+					}
+				}
+				
+			}
+			
+		}
+		
+	}
+	
+	/**
+	* delete_files_check
+	* 
+	* Helper to check if plupload files should be deleted for
+	* an entry
+	* 
+	* @access 	public
+	* @author	Ben Moody
+	*/
+	private function delete_files_check( $lead_id = NULL ) {
+		
+		//Init vars
+		$delete_files = FALSE;
+		
+		if( isset($lead_id) ) {
+			//Get entry meta for delete files option
+			$delete_files = gform_get_meta( $lead_id, self::$delete_files_meta_key );
+			
+			if( $delete_files === 'checked' ) {
+				return TRUE;
+			}
+			
+		}
+		
+		return FALSE;
+	}
+	
+	/**
+	* get_lead_detail_long_value
+	* 
+	* Helper to get the 'long value' for a specific entry field
+	* 
+	* @param	int			$lead_id	Entry ID
+	* @param	int			$field_id	Field ID
+	* @return	string		$results	Value from 'long value' gforms table
+	* @access 	public
+	* @author	Ben Moody
+	*/
+	private function get_lead_detail_long_value( $lead_id = NULL, $field_id = NULL ) {
+		
+		//Init vars
+		global $wpdb;
+		$lead_detail_id = NULL;
+		$results 		= NULL;
+		
+		if( isset($lead_id, $field_id) ) {
+			
+			$lead_details_table_name =  RGFormsModel::get_lead_details_table_name();
+	        $lead_details_long_table_name =  RGFormsModel::get_lead_details_long_table_name();
+	        
+	        $lead_detail_id = $wpdb->get_results(
+	        	"SELECT lead_detail_id FROM {$lead_details_table_name} d
+	        	 INNER JOIN {$lead_details_long_table_name} l ON d.id = l.lead_detail_id
+	        	 WHERE lead_id = {$lead_id} AND field_number = {$field_id}"
+	        );
+			
+			if( isset($lead_detail_id[0]->lead_detail_id) ) {
+			
+				$lead_detail_id = $lead_detail_id[0]->lead_detail_id;
+				
+				$results = $wpdb->get_results(
+		        	"SELECT $lead_details_long_table_name.value FROM {$lead_details_long_table_name}
+		        	 WHERE lead_detail_id = {$lead_detail_id}"
+		        );
+			}
+			
+			if( isset($results[0]->value) ) {
+				$results = maybe_unserialize( $results[0]->value );
+			}
+			
+		}
+		
+		return $results;
+	}
+	
+	/**
+	* pluploader_trash_checkbox
+	* 
+	* Called by 'gform_update_status' gravity forms action.
+	* Handles the meta data for an entry relating to the deletion
+	* of any plupload files attached the entry.
+	* 
+	* @access 	public
+	* @author	Ben Moody
+	*/
+	public function pluploader_trash_checkbox( $lead_id, $property_value, $previous_value ) {
+		
+		if( isset($property_value) && $property_value === 'trash' ) {
+			
+			if( isset($_POST['prso_pluploader_delete_uploads']) && $_POST['prso_pluploader_delete_uploads'] === 'on' ) {
+				//Update delete file meta for this entry
+				gform_update_meta( $lead_id, self::$delete_files_meta_key, 'checked' );
+			} else {
+				//Update delete file meta for this entry
+				gform_delete_meta( $lead_id, self::$delete_files_meta_key );
+			}
+			
+		}
+		
+	}
+	
+	/**
+	* localize_script_prso_pluploader_entries
+	* 
+	* Called by $this->enqueue_scripts().
+	* Localizes some variables for use in a js script that adds a file delete option
+	* to the entry post edit page and warns users of file deletion when sending an entry to the trash
+	* 
+	* @access 	public
+	* @author	Ben Moody
+	*/
+	private function localize_script_prso_pluploader_entries() {
+		
+		//Init vars
+		$input_field	= NULL;
+		$message		= __("NOT deleting uploaded files. To delete any uploaded files, be sure to check Delete Uploads", "prso_gform_pluploader");	
+		$delete_files 	= NULL;
+		$entry_id 		= NULL;
+		
+		//Set the checkbox input field html
+		$input_field = '<div style="padding:10px 10px 10px 0;"><input id="prso_pluploader_delete_uploads" type="checkbox" onclick="" name="prso_pluploader_delete_uploads"><label for="prso_fineup_delete_uploads">&nbsp;'. __("Delete Plupload Uploaded Files", "prso_gform_uploader") .'</label></div>';
+		
+		//Get entry meta for delete files option
+		if( isset($_GET['lid']) ) {
+			$entry_id = (int) $_GET['lid'];
+		}
+		
+		$delete_files = gform_get_meta( $entry_id, self::$delete_files_meta_key );
+		
+		wp_localize_script( 
+			'prso-pluploader-entries', 
+			'prso_gforms_pluploader', 
+			array('file_delete_message' => $message, 'file_delete_meta' => esc_attr($delete_files), 'input_field_html' => $input_field) 
+		);
+		
+	}
+	
+	/**
+	* pluploader_entry_apply_button
+	* 
+	* Called by 'gform_entry_apply_button' gravity forms filter.
+	* Fitlers the entry index view bulk action apply button adding a js confirm dialog box for onclick event
+	* 
+	* @access 	public
+	* @author	Ben Moody
+	*/
+	public function pluploader_entry_apply_button( $apply_button_html = NULL ) {
+		
+		//Init vars
+		$output 	= NULL;
+		$message	= __("Are You sure? Uploaded files will be deleted! To keep files for an entry, delete that specific entry only, don\'t use Bulk Action.", "prso_gform_pluploader");
+		$on_click	= "if(jQuery('#bulk_action').val() === 'trash'){ if(!confirm('". $message ."')){return false;} }return handleBulkApply('bulk_action');";
+		
+		$output = $apply_button_html;
+		
+		if( isset($apply_button_html) ) {
+			
+			//Cache the html
+			ob_start();
+			?>
+			<input type="submit" class="button" value="<?php _e("Apply", "gravityforms"); ?>" onclick="<?php echo $on_click; ?>" />
+			<?php
+			$output = ob_get_contents();
+			ob_end_clean();
+
+		}
+		
+		return $output;
 	}
 	
 	/**
