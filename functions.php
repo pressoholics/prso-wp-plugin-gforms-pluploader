@@ -80,7 +80,9 @@ class PrsoGformsPluploaderFunctions extends PrsoGformsPluploaderAppController {
 	public function register_scripts() {
 		
 		//Init vars
-		$plugin_file_path = NULL;
+		$plugin_file_path 			= NULL;
+		$plupload_i18n_script		= NULL;
+		$plupload_i18n_script_path	= NULL;
 		
 		if( isset(PrsoGformsPluploaderConfig::$plugin_file_path) ){
 			$plugin_file_path = PrsoGformsPluploaderConfig::$plugin_file_path;
@@ -91,7 +93,19 @@ class PrsoGformsPluploaderFunctions extends PrsoGformsPluploaderAppController {
 		
 		wp_register_script( 'plupload-jquery-ui', plugins_url('js/jquery.ui.plupload/jquery.ui.plupload.js', $plugin_file_path), array('plupload-all'), '1.0', TRUE );
 		
+		//i18n Scripts
+		$plupload_i18n_script = apply_filters( 'prso_gform_pluploader_i18n_script', $plupload_i18n_script );
 		
+		//Register request plupload i18n script if found
+		if( isset($this->plugin_root, $plupload_i18n_script) ) {
+			
+			$plupload_i18n_script_path = $this->plugin_root. '/' . 'js/i18n/' . $plupload_i18n_script . '.js';
+			
+			if( file_exists($plupload_i18n_script_path)) {
+				wp_register_script( "plupload-i18n", plugins_url("js/i18n/{$plupload_i18n_script}.js", $plugin_file_path), array('plupload-jquery-ui-core'), NULL, TRUE );
+			}
+			
+		}
 		
 		//Register custom scripts for use with gforms
 		wp_register_script( 'prso-pluploader-entries', plugins_url('js/gforms-entries.js', $plugin_file_path), array('jquery'), '1.0', TRUE );
@@ -131,6 +145,9 @@ class PrsoGformsPluploaderFunctions extends PrsoGformsPluploaderAppController {
 			//Enqueue scripts for Plupload
 			wp_enqueue_script('plupload-all');
 			wp_enqueue_script('plupload-jquery-ui');
+			
+			//i18n if requested
+			wp_enqueue_script('plupload-i18n');
 			
 		}
 		
