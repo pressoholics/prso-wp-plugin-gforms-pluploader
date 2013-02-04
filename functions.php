@@ -826,6 +826,9 @@ class PrsoGformsPluploaderFunctions extends PrsoGformsPluploaderAppController {
 		//Cache the current form ID
 		if( isset($_REQUEST['currentFormID']) && isset($_REQUEST['currentFieldID']) ) {
 			
+			//Allow devs to hook before we get the form's validation settings
+			do_action('prso_gform_pluploader_pre_get_server_validation', TRUE);
+			
 			$current_form_id = (int) $_REQUEST['currentFormID'];
 			
 			$current_field_id = (int) $_REQUEST['currentFieldID'];
@@ -861,6 +864,9 @@ class PrsoGformsPluploaderFunctions extends PrsoGformsPluploaderAppController {
 			}
 			
 		}
+		
+		//Allow devs to hook before we get the form's validation settings
+		$validation_args = apply_filters('prso_gform_pluploader_server_validation_args', $validation_args, $form);
 		
 		return $validation_args;
 		
