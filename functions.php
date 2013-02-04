@@ -410,21 +410,24 @@ class PrsoGformsPluploaderFunctions extends PrsoGformsPluploaderAppController {
 		//Init vars
 		$load_pluploader = FALSE;
 		
-	    // cycle through fields to see if prso_gform_pluploader is being used
-	    foreach ( $form['fields'] as $field ) {
-	    	
-	    	//Confirm prso_gform_pluploader custom field is in form
-	        if( $field['type'] == 'prso_gform_pluploader') {
-				
-				//Cache that form contains custom field
-				$load_pluploader = TRUE;
-				
-				//Process field args for Fine Uploader javascript
-				$this->activate_fine_uploader( $form, $field );
-				            
-	        }
-	        
-	    }
+		if( isset($form['fields']) ) {
+			// cycle through fields to see if prso_gform_pluploader is being used
+		    foreach ( $form['fields'] as $field ) {
+		    	
+		    	//Confirm prso_gform_pluploader custom field is in form
+		        if( $field['type'] == 'prso_gform_pluploader') {
+					
+					//Cache that form contains custom field
+					$load_pluploader = TRUE;
+					
+					//Process field args for Fine Uploader javascript
+					$this->activate_plupload_uploader( $form, $field );
+					            
+		        }
+		        
+		    }
+		}
+	    
 	    
 	    //If form contains field enqueue scripts
 	    if( $load_pluploader ) {
@@ -437,7 +440,7 @@ class PrsoGformsPluploaderFunctions extends PrsoGformsPluploaderAppController {
 	}
 	
 	/**
-	* activate_fine_uploader
+	* activate_plupload_uploader
 	* 
 	* Called during 'gform_enqueue_scripts' action via $this->pluploader_enqueue_scripts()
 	* Loops through any custom field options and renders the javascript required to
@@ -446,7 +449,7 @@ class PrsoGformsPluploaderFunctions extends PrsoGformsPluploaderAppController {
 	* @access 	public
 	* @author	Ben Moody
 	*/
-	public function activate_fine_uploader( $form = array(), $field = array() ) {
+	public function activate_plupload_uploader( $form = array(), $field = array() ) {
 		
 		//Init vars
 		$args = array();
@@ -994,6 +997,8 @@ class PrsoGformsPluploaderFunctions extends PrsoGformsPluploaderAppController {
 			
 			//Cache path to fine uploader tmp directory
 			$pluploader_tmp_dir = $wp_upload_dir['basedir'] . '/' . self::$prso_pluploader_tmp_dir_name . '/';
+			
+			$wp_upload_dir = apply_filters( 'prso_gform_pluploader_wp_upload_dir', $wp_upload_dir ); //Apply any filters to wp_upload_dir
 			
 			//Cache tmp location of file on server
 			$uploaded_file_path = $pluploader_tmp_dir . $file_base_name;
