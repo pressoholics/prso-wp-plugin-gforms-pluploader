@@ -1237,7 +1237,7 @@ class PrsoGformsPluploaderFunctions extends PrsoGformsPluploaderAppController {
 		if( !isset($_GET['lid']) ) {
 			
 			if( isset($field['type']) &&  $field['type'] === 'prso_gform_pluploader' ) {
-				return __("View form entry for file details.", "prso_gform_pluploader");
+				return __("View form entry for file details.", "prso-gforms-plupload");
 			}
 			
 		}
@@ -1517,12 +1517,12 @@ class PrsoGformsPluploaderFunctions extends PrsoGformsPluploaderAppController {
 		
 		//Init vars
 		$input_field	= NULL;
-		$message		= __("NOT deleting uploaded files. To delete any uploaded files, be sure to check Delete Uploads", "prso_gform_pluploader");	
+		$message		= __("NOT deleting uploaded files. To delete any uploaded files, be sure to check Delete Uploads", "prso-gforms-plupload");	
 		$delete_files 	= NULL;
 		$entry_id 		= NULL;
 		
 		//Set the checkbox input field html
-		$input_field = '<div style="padding:10px 10px 10px 0;"><input id="prso_pluploader_delete_uploads" type="checkbox" onclick="" name="prso_pluploader_delete_uploads"><label for="prso_fineup_delete_uploads">&nbsp;'. __("Delete Plupload Uploaded Files", "prso_gform_uploader") .'</label></div>';
+		$input_field = '<div style="padding:10px 10px 10px 0;"><input id="prso_pluploader_delete_uploads" type="checkbox" onclick="" name="prso_pluploader_delete_uploads"><label for="prso_fineup_delete_uploads">&nbsp;'. __("Delete Plupload Uploaded Files", "prso-gforms-plupload") .'</label></div>';
 		
 		//Get entry meta for delete files option
 		if( isset($_GET['lid']) ) {
@@ -1552,7 +1552,7 @@ class PrsoGformsPluploaderFunctions extends PrsoGformsPluploaderAppController {
 		
 		//Init vars
 		$output 	= NULL;
-		$message	= __("Are You sure? Uploaded files will be deleted! To keep files for an entry, delete that specific entry only, don\'t use Bulk Action.", "prso_gform_pluploader");
+		$message	= __("Are You sure? Uploaded files will be deleted! To keep files for an entry, delete that specific entry only, don\'t use Bulk Action.", "prso-gforms-plupload");
 		$on_click	= "if(jQuery('#bulk_action').val() === 'trash'){ if(!confirm('". $message ."')){return false;} }return handleBulkApply('bulk_action');";
 		
 		$output = $apply_button_html;

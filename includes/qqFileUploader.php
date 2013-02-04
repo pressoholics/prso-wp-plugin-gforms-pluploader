@@ -70,7 +70,7 @@ class qqFileUploader {
 	            	'file_uid'	=> $uuid,
 	            	'error' 	=> array( 
 	            		'code' => 100,
-	            		'message' => "Server Error. Max file size to high, try activate chunking." 
+	            		'message' => __( "Server Error. Max file size to high, try activate chunking.", "prso-gforms-plupload") 
 	            	)
 	            );
 	        }
@@ -122,7 +122,7 @@ class qqFileUploader {
 	            	'file_uid'	=> $uuid,
 	            	'error' 	=> array( 
 	            		'code' => 100,
-	            		'message' => "Server error. Uploads directory isn't writable or executable." 
+	            		'message' => __( "Server error. Uploads directory isn't writable or executable.", "prso-gforms-plupload") 
 	            	)
 	            );
         }
@@ -144,7 +144,7 @@ class qqFileUploader {
             	'file_uid'	=> $uuid,
             	'error' 	=> array( 
             		'code' => 100,
-            		'message' => "Server error. Not a multipart request. Please set forceMultipart to default value (true)." 
+            		'message' => __( "Server error. Not a multipart request. Please set forceMultipart to default value (true).", "prso-gforms-plupload") 
             	)
             );
         }
@@ -165,7 +165,7 @@ class qqFileUploader {
             	'file_uid'	=> $uuid,
             	'error' 	=> array( 
             		'code' => 100,
-            		'message' => "File name is empty." 
+            		'message' => __( "File name is empty.", "prso-gforms-plupload") 
             	)
             );
         }
@@ -178,7 +178,7 @@ class qqFileUploader {
             	'file_uid'	=> $uuid,
             	'error' 	=> array( 
             		'code' => 100,
-            		'message' => "File is empty." 
+            		'message' => __( "File is empty.", "prso-gforms-plupload") 
             	)
             );
         }
@@ -189,7 +189,7 @@ class qqFileUploader {
             	'file_uid'	=> $uuid,
             	'error' 	=> array( 
             		'code' => 100,
-            		'message' => "File is too large. Max " .  $this->sizeLimit . "M"
+            		'message' => sprintf( __("File is too large. Max %s M", "prso-gforms-plupload"), $this->sizeLimit )
             	)
             );
         }
@@ -206,7 +206,7 @@ class qqFileUploader {
             	'file_uid'	=> $uuid,
             	'error' 	=> array( 
             		'code' => 100,
-            		'message' => 'File has an invalid extension, it should be one of '. $these . '.' 
+            		'message' => sprintf( __("File has an invalid extension, it should be one of %s.", "prso-gforms-plupload"), $these )
             	)
             );
         }
@@ -248,7 +248,7 @@ class qqFileUploader {
 	            	'file_uid'	=> $uuid,
 	            	'error' 	=> array( 
 	            		'code' => 100,
-	            		'message' => "Server error. Chunks directory isn't writable or executable."
+	            		'message' => __( "Server error. Chunks directory isn't writable or executable.", "prso-gforms-plupload")
 	            	)
 	            );
             }
@@ -285,7 +285,7 @@ class qqFileUploader {
 		            	'file_uid'	=> $uuid,
 		            	'error' 	=> array( 
 		            		'code' => 100,
-		            		'message' => "Failed to open input stream"
+		            		'message' => __( "Failed to open input stream", "prso-gforms-plupload")
 		            	)
 		            );
 				}
@@ -299,7 +299,7 @@ class qqFileUploader {
 		            	'file_uid'	=> $uuid,
 		            	'error' 	=> array( 
 		            		'code' => 100,
-		            		'message' => "Failed to open chunk destination file"
+		            		'message' => __( "Failed to open chunk destination file", "prso-gforms-plupload")
 		            	)
 		            );
 			}
@@ -333,7 +333,7 @@ class qqFileUploader {
 			            	'file_uid'	=> $uuid,
 			            	'error' 	=> array( 
 			            		'code' => 100,
-			            		'message' => "Failed to move final buffer file"
+			            		'message' => __( "Failed to move final buffer file", "prso-gforms-plupload")
 			            	)
 			            );
 		            }
@@ -344,7 +344,7 @@ class qqFileUploader {
 			            	'file_uid'	=> $uuid,
 			            	'error' 	=> array( 
 			            		'code' => 100,
-			            		'message' => "Error generating final file path"
+			            		'message' => __( "Error generating final file path", "prso-gforms-plupload")
 			            	)
 			            );
 	            }
@@ -383,7 +383,7 @@ class qqFileUploader {
             	'file_uid'	=> $uuid,
             	'error' 	=> array( 
             		'code' => 100,
-            		'message' => "The upload was cancelled, or server error encountered"
+            		'message' => __( "The upload was cancelled, or server error encountered", "prso-gforms-plupload")
             	)
             );
         }
