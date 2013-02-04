@@ -998,7 +998,8 @@ class PrsoGformsPluploaderFunctions extends PrsoGformsPluploaderAppController {
 			//Cache path to fine uploader tmp directory
 			$pluploader_tmp_dir = $wp_upload_dir['basedir'] . '/' . self::$prso_pluploader_tmp_dir_name . '/';
 			
-			$wp_upload_dir = apply_filters( 'prso_gform_pluploader_wp_upload_dir', $wp_upload_dir ); //Apply any filters to wp_upload_dir
+			//FILTER - Allow devs to filter the wp_upload_dir array before inserting attachment
+			$wp_upload_dir = apply_filters( 'prso_gform_pluploader_wp_upload_dir', $wp_upload_dir );
 			
 			//Cache tmp location of file on server
 			$uploaded_file_path = $pluploader_tmp_dir . $file_base_name;
