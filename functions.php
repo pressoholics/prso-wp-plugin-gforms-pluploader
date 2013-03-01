@@ -316,7 +316,7 @@ class PrsoGformsPluploaderFunctions extends PrsoGformsPluploaderAppController {
 			
 			//Cache the hidden field taht will store data on uploaded files
 			$input = sprintf(
-	        	"<div class='ginput_container'><input name='input_%s' id='%s' type='hidden' />", 
+	        	"<div class='ginput_container'><input name='input_%s' id='%s' type='hidden' /></div>", 
 	        	$field["id"], 
 	        	'prso_form_pluploader_'.$field['id']
 	        );
