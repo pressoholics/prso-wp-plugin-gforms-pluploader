@@ -323,7 +323,7 @@ class PrsoGformsPluploaderFunctions extends PrsoGformsPluploaderAppController {
 			
 			//Cache the div element used by Fine Uploader jquery plugin
 			$plupload_container = sprintf(
-				"<div id='pluploader_%s'></div></div>",
+				"<div id='pluploader_%s'></div>",
 				$field["id"]
 			);
 			
