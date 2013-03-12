@@ -588,7 +588,7 @@ class PrsoGformsPluploaderFunctions extends PrsoGformsPluploaderAppController {
 					?>
 					jQuery("#<?php echo $uploader_args['element']; ?>").plupload({
 						// General settings
-						runtimes : 'flash,html5,browserplus,silverlight,gears,html4',
+						runtimes : 'html5,browserplus,silverlight,gears,html4',
 						url : '<?php echo admin_url('admin-ajax.php'); ?>',
 						max_file_size : '<?php 
 							//Add validation options
@@ -890,6 +890,7 @@ class PrsoGformsPluploaderFunctions extends PrsoGformsPluploaderAppController {
 		//Init vars
 		$is_pluploader 			= FALSE;
 		$pluploader_field_data	= array();
+		$wp_attachment_data		= array();
 		
 		//First check that this form is using fine uploader to upload files
 		if( isset($form['fields']) && !empty($form['fields']) ) {
@@ -919,7 +920,10 @@ class PrsoGformsPluploaderFunctions extends PrsoGformsPluploaderAppController {
 				}
 				
 				//If there is some field data to process let's process it!
-				$this->process_uploads( $pluploader_field_data, $entry );
+				$wp_attachment_data = $this->process_uploads( $pluploader_field_data, $entry );
+				
+				//Action hook for successfully completed uploads
+				do_action( 'prso_gform_pluploader_processed_uploads', $wp_attachment_data, $entry, $form );
 				
 			}
 
@@ -986,6 +990,7 @@ class PrsoGformsPluploaderFunctions extends PrsoGformsPluploaderAppController {
 			
 		}
 		
+		return $pluploader_wp_attachment_data;
 	}
 	
 	/**
@@ -1327,6 +1332,9 @@ class PrsoGformsPluploaderFunctions extends PrsoGformsPluploaderAppController {
 						),
 						esc_url($post_edit_url)
 					);
+					
+					//Filter hook for wp attachment link
+					$file_attachment_urls[$key]['url'] = apply_filters( 'prso_gform_pluploader_entry_attachment_links', $file_attachment_urls[$key]['url'], $file_id, $post );
 					
 				}
 			}
