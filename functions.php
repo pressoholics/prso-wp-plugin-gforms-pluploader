@@ -1,20 +1,5 @@
 <?php
-/**
- * General App Functions
- *
- * Contents:
- * 	** PRSO PLUGIN FRAMEWORK METHODS **
- *		__construct()		- Magic method construct
- *		admin_init()		- Helps to consolidate all plugin wide calls to Wordpress action hooks that must be added during 'admin_init'
- *		save_post()			- Call any methods that must be called during saving a post here
- *		enqueue_scripts()	- Call all plugin wp_enqueue_script or wp_enqueue_style here
- *		add_actions()		- Add any calls to Wordpress add_action() here
- *		add_filters()		- Add any calls to Wordpress add_filter() here
- *
- *	** METHODS SPECIFIC TO THIS PLUGIN **
- *		save_fields()				- Carries out tasks to be run during post save
- *
- */
+
 class PrsoGformsPluploaderFunctions extends PrsoGformsPluploaderAppController {
 	
 	public $prso_pluploader_args 					= NULL;
@@ -65,7 +50,13 @@ class PrsoGformsPluploaderFunctions extends PrsoGformsPluploaderAppController {
 		
 		
 		//*** ADD CUSTOM ACTIONS HERE ***//
-
+		
+		//Include Terms of Service plugin
+		$tos_path = $this->plugin_includes . '/inc_gforms_terms.php';
+		if( file_exists($tos_path) ) {
+			include_once( $tos_path );
+			new PrsoGformsTermsFunctions();
+		}
 		
 	}
 	
@@ -1347,9 +1338,16 @@ class PrsoGformsPluploaderFunctions extends PrsoGformsPluploaderAppController {
 					if( isset($file_info['url'], $file_info['ext']) ) {
 						
 						//Cache the file upload number
-					$file_number = $key + 1;
-					
-					$output.= "<a title='Click to view file #{$file_number}' href='{$file_info['url']}' target='_blank'>View File #{$file_number} ({$file_info['ext']}), </a>";
+						$file_number = $key + 1;
+						
+						$output.= "<a title='Click to view file #{$file_number}' href='{$file_info['url']}' target='_blank'>View File #{$file_number} ({$file_info['ext']}), </a>";
+						
+					} elseif( isset($file_info['url']) ) {
+						
+						//Cache the file upload number
+						$file_number = $key + 1;
+						
+						$output.= "<a title='Click to view file #{$file_number}' href='{$file_info['url']}' target='_blank'>View File #{$file_number} (External), </a>";
 						
 					}
 					
