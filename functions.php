@@ -573,60 +573,90 @@ class PrsoGformsPluploaderFunctions extends PrsoGformsPluploaderAppController {
 			
 			//Loop each pluploader field and cache js required to activate each one
 			ob_start();
+			
 			foreach( $this->prso_pluploader_args as $field_id => $uploader_args ){
 				//Check for minimum args
 				if( isset($uploader_args['element']) ) {
 					?>
-					jQuery("#<?php echo $uploader_args['element']; ?>").plupload({
+					//Plupload var obj
+					PrsoPluploadVars = new Object();
+					
+					//Cache max unmber of file allowed
+					PrsoPluploadVars.max_files = 2;
+					
+					//Auto upload when files added
+					PrsoPluploadVars.auto_upload = true;
+					
+					//Plupload element id
+					PrsoPluploadVars.element = '<?php echo $uploader_args['element']; ?>';
+					
+					//Runtimes
+					PrsoPluploadVars.runtimes = 'html5,browserplus,silverlight,gears,html4';
+					
+					//Request url - wp ajax request
+					PrsoPluploadVars.wp_ajax_url = '<?php echo admin_url('admin-ajax.php'); ?>';
+					
+					//Max file size 
+					PrsoPluploadVars.max_file_size = '<?php echo $uploader_args['validation']['sizeLimit']; ?>mb';
+					
+					//Enable chunking
+					PrsoPluploadVars.chunking = '1mb';
+					
+					//Create params object
+					PrsoPluploadVars.params = new Object();
+					
+					//Cache params - Gravity forms Form ID
+					PrsoPluploadVars.params.form_id = '<?php echo $uploader_args['form_id']; ?>';
+					
+					//Cache params - Gravity forms Field ID
+					PrsoPluploadVars.params.field_id = '<?php echo $field_id; ?>';
+					
+					//Cache params - WP Nonce value
+					PrsoPluploadVars.params.nonce = '<?php echo $nonce; ?>';
+					
+					//Create filters object
+					PrsoPluploadVars.filters = new Object();
+					
+					//Cache filter - allowed files
+					PrsoPluploadVars.filters.files = '<?php echo $uploader_args['validation']['allowedExtensions']; ?>';
+					
+					//Cache url to Flash file
+					PrsoPluploadVars.flash_url = '<?php echo includes_url('/js/plupload/plupload.flash.swf'); ?>';
+					
+					//Cache url to Silverlight url
+					PrsoPluploadVars.silverlight_url = '<?php echo includes_url('/js/plupload/plupload.silverlight.xap'); ?>';
+					
+										
+					//Init Plupload
+					jQuery("#" + PrsoPluploadVars.element).plupload({
 						// General settings
-						runtimes : 'html5,browserplus,silverlight,gears,html4',
-						url : '<?php echo admin_url('admin-ajax.php'); ?>',
-						max_file_size : '<?php 
-							//Add validation options
-							if( isset($uploader_args['validation']['sizeLimit']) ) {
-								echo $uploader_args['validation']['sizeLimit'];
-							}
-						?>mb',
-						max_file_count: 20, // user can add no more then 20 files at a time
-						<?php 
-							//Add validation options
-							if( $uploader_args['chunking']['enabled'] === TRUE ) {
-								echo "chunk_size : '1mb',\n";
-							}
-						?>
+						runtimes : PrsoPluploadVars.runtimes,
+						url : PrsoPluploadVars.wp_ajax_url,
+						max_file_size : PrsoPluploadVars.max_file_size,
+						max_file_count: PrsoPluploadVars.max_files, // user can add no more then x files at a time
+						chunk_size: PrsoPluploadVars.chunking,
 						unique_names : true,
 						multiple_queues : true,
 						multipart_params : { 
 							'action': 'prso-plupload-submit', 
-							<?php 
-								//Pass form ID
-								if( isset($uploader_args['form_id']) ) {
-									echo "'currentFormID': '{$uploader_args['form_id']}',\n";
-								}
-								//Pass field ID
-								if( isset($field_id) ) {
-									echo "'currentFieldID': '{$field_id}',\n";
-								}
-								//Pass nonce string
-								echo "'nonce': '{$nonce}', \n";
-							?>
+							'currentFormID': PrsoPluploadVars.params.form_id,
+							'currentFieldID': PrsoPluploadVars.params.field_id,
+							'nonce': PrsoPluploadVars.params.nonce,
 						},
 				
 						// Specify what files to browse for
 						filters : [
-							{title : "files", extensions : "<?php 
-							//Add validation options
-							if( isset($uploader_args['validation']['allowedExtensions']) ) {
-								echo $uploader_args['validation']['allowedExtensions'];
+							{
+								title : "files", 
+								extensions : PrsoPluploadVars.filters.files
 							}
-						?>"}
 						],
 				
 						// Flash settings
-						flash_swf_url : '<?php echo includes_url('/js/plupload/plupload.flash.swf'); ?>',
+						flash_swf_url : PrsoPluploadVars.flash_url,
 				
 						// Silverlight settings
-						silverlight_xap_url : '<?php echo includes_url('/js/plupload/plupload.silverlight.xap'); ?>',
+						silverlight_xap_url : PrsoPluploadVars.silverlight_url,
 						
 						//Post init events
 						init : {
@@ -654,9 +684,9 @@ class PrsoGformsPluploaderFunctions extends PrsoGformsPluploaderAppController {
 									
 								} else if( obj.result === 'success' ) {
 									
-									var inputField = '<input id="gform-plupload-'+ obj.file_uid +'" type="hidden" name="plupload[<?php echo $field_id; ?>][]" value="'+ obj.success.file_id +'"/>';
+									var inputField = '<input id="gform-plupload-'+ obj.file_uid +'" type="hidden" name="plupload['+ PrsoPluploadVars.params.field_id +'][]" value="'+ obj.success.file_id +'"/>';
 									
-									jQuery('#gform_<?php echo $uploader_args['form_id']; ?>').append(inputField);
+									jQuery('#gform_' + PrsoPluploadVars.params.form_id).append(inputField);
 									
 								} else {
 									
@@ -671,6 +701,51 @@ class PrsoGformsPluploaderFunctions extends PrsoGformsPluploaderAppController {
 								}
 								
 							},
+							FilesAdded: function(up, files) {
+							
+								//Remove files if max limit reached
+				                plupload.each(files, function(file) {
+				                	
+				                	//File added result
+				                	var file_added_result = true;
+				                	
+				                    if (up.files.length > PrsoPluploadVars.max_files) {
+				                        up.removeFile(file);
+				                        
+				                        file_added_result = false;
+				                    }
+				                    
+				                    //Prevent duplicate files
+				                    var upa = jQuery('#' + PrsoPluploadVars.element).plupload('getUploader');
+				                    var i = 0;
+				                    while (i <= upa.files.length) {
+				                        ultimo = upa.files.length;
+				                        if (ultimo > 1) {
+				                            if (i > 0) {
+				                                ultimo2 = ultimo - 1;
+				                                ii = i-1;
+				                                if (ultimo2 != ii) {
+				                                    if (up.files[ultimo - 1].name == upa.files[i-1].name) {
+				                                        up.removeFile(file);
+				                                        
+				                                        file_added_result = false;
+				                                    }
+				                                }
+				                            }
+				                        }
+				                        i++;
+				                    }
+				                    
+				                    //If file added then check if auto upload isset
+				                    if( file_added_result === true ) {
+				                    	if( PrsoPluploadVars.auto_upload === true ) {
+				                    		up.start();
+				                    	}
+				                    }
+				                    
+				                });
+				                
+				            },
 							FilesRemoved: function(up, files) {
 								
 								//Remove hidden gforms input for this file
