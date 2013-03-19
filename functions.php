@@ -101,6 +101,9 @@ class PrsoGformsPluploaderFunctions extends PrsoGformsPluploaderAppController {
 		//Register custom scripts for use with gforms
 		wp_register_script( 'prso-pluploader-entries', plugins_url('js/gforms-entries.js', $plugin_file_path), array('jquery'), '1.0', TRUE );
 		
+		//Register plupload init script
+		wp_register_script( 'prso-pluploader-init', plugins_url('js/init_plupload.js', $plugin_file_path), array('plupload-jquery-ui'), '1.0', TRUE );
+		
 		//Register Fine Uploader Styles
 		wp_register_style( 'plupload-jquery-ui-core', 'http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.9/themes/base/jquery-ui.css', NULL, '1.8.9', 'screen' );
 		wp_register_style( 'plupload-jquery-ui', plugins_url('js/jquery.ui.plupload/css/jquery.ui.plupload.css', $plugin_file_path), array('plupload-jquery-ui-core'), '1.0', 'screen' );
@@ -151,7 +154,11 @@ class PrsoGformsPluploaderFunctions extends PrsoGformsPluploaderAppController {
 		
 		//Enqueue fine uploader activate script
 		if( $activate_fine_uploader === TRUE ) {
-			add_action( 'wp_footer', array($this, 'print_pluploader_activate_script'), 100 );
+			//Enqueue plugin plupload init script
+			wp_enqueue_script('prso-pluploader-init');
+			
+			//Call helper to cache and localize vars requied for init
+			$this->localize_pluploader_init_vars();
 		}
 		
 		//Enqueue styles for Fine Uploader
@@ -550,231 +557,82 @@ class PrsoGformsPluploaderFunctions extends PrsoGformsPluploaderAppController {
 	}
 	
 	/**
-	* print_pluploader_activate_script
+	* localize_pluploader_init_vars
 	* 
-	* Called during 'wp_footer' action if displaying a gform which contains the pluploader custom field
-	* Loops through any custom field options and renders the javascript required to
-	* activate the Fine Uploader THEN echos it to the footer during 'wp_footer' action
+	* Called during 'enqueue_scripts' action if displaying a gform which contains the pluploader custom field
+	* Loops through any custom field options and localizes the variables required by the init javascript file to
+	* activate the Fine Uploader
 	* 
 	* @access 	public
 	* @author	Ben Moody
 	*/
-	public function print_pluploader_activate_script() {
+	private function localize_pluploader_init_vars() {
 		
 		//Init vars
 		$pluploader_code 	= NULL;
-		$output 		= NULL;
-		$nonce			= NULL;
+		$nonce				= NULL;
+		$local_vars			= array();
+		$local_obj_name		= 'WpPrsoPluploadPluginVars';
 		
 		if( !empty($this->prso_pluploader_args) && is_array($this->prso_pluploader_args) ) {
 			
 			//First create nonce string
 			$nonce = wp_create_nonce( self::$submit_nonce_key );
 			
-			//Loop each pluploader field and cache js required to activate each one
-			ob_start();
-			
+			//Loop each pluploader field and cache vars required to activate each one
 			foreach( $this->prso_pluploader_args as $field_id => $uploader_args ){
 				//Check for minimum args
 				if( isset($uploader_args['element']) ) {
-					?>
-					//Plupload var obj
-					PrsoPluploadVars = new Object();
-					
-					//Cache max unmber of file allowed
-					PrsoPluploadVars.max_files = 2;
-					
-					//Auto upload when files added
-					PrsoPluploadVars.auto_upload = true;
 					
 					//Plupload element id
-					PrsoPluploadVars.element = '<?php echo $uploader_args['element']; ?>';
+					$local_vars[$field_id]['element'] 				= $uploader_args['element'];
+					
+					//Cache max unmber of file allowed
+					$local_vars[$field_id]['max_files'] 			= 2;
+					
+					//Auto upload when files added
+					$local_vars[$field_id]['auto_upload'] 			= true;
 					
 					//Runtimes
-					PrsoPluploadVars.runtimes = 'html5,browserplus,silverlight,gears,html4';
+					$local_vars[$field_id]['runtimes'] 				= 'html5,browserplus,silverlight,gears,html4';
 					
 					//Request url - wp ajax request
-					PrsoPluploadVars.wp_ajax_url = '<?php echo admin_url('admin-ajax.php'); ?>';
+					$local_vars[$field_id]['wp_ajax_url'] 			= admin_url('admin-ajax.php');
 					
 					//Max file size 
-					PrsoPluploadVars.max_file_size = '<?php echo $uploader_args['validation']['sizeLimit']; ?>mb';
+					$local_vars[$field_id]['max_file_size'] 		= $uploader_args['validation']['sizeLimit'] . 'mb';
 					
 					//Enable chunking
-					PrsoPluploadVars.chunking = '1mb';
-					
-					//Create params object
-					PrsoPluploadVars.params = new Object();
+					$local_vars[$field_id]['chunking'] 				= '1mb';
 					
 					//Cache params - Gravity forms Form ID
-					PrsoPluploadVars.params.form_id = '<?php echo $uploader_args['form_id']; ?>';
+					$local_vars[$field_id]['params']['form_id'] 	= $uploader_args['form_id'];
 					
 					//Cache params - Gravity forms Field ID
-					PrsoPluploadVars.params.field_id = '<?php echo $field_id; ?>';
+					$local_vars[$field_id]['params']['field_id'] 	= $field_id;
 					
 					//Cache params - WP Nonce value
-					PrsoPluploadVars.params.nonce = '<?php echo $nonce; ?>';
+					$local_vars[$field_id]['params']['nonce'] 		= $nonce;
 					
-					//Create filters object
-					PrsoPluploadVars.filters = new Object();
-					
-					//Cache filter - allowed files
-					PrsoPluploadVars.filters.files = '<?php echo $uploader_args['validation']['allowedExtensions']; ?>';
+					//Cache filter - allowed filesize
+					$local_vars[$field_id]['filters']['files'] 	= $uploader_args['validation']['allowedExtensions'];
 					
 					//Cache url to Flash file
-					PrsoPluploadVars.flash_url = '<?php echo includes_url('/js/plupload/plupload.flash.swf'); ?>';
+					$local_vars[$field_id]['flash_url'] 			= includes_url('/js/plupload/plupload.flash.swf');
 					
 					//Cache url to Silverlight url
-					PrsoPluploadVars.silverlight_url = '<?php echo includes_url('/js/plupload/plupload.silverlight.xap'); ?>';
+					$local_vars[$field_id]['silverlight_url'] 		= includes_url('/js/plupload/plupload.silverlight.xap');
 					
-										
-					//Init Plupload
-					jQuery("#" + PrsoPluploadVars.element).plupload({
-						// General settings
-						runtimes : PrsoPluploadVars.runtimes,
-						url : PrsoPluploadVars.wp_ajax_url,
-						max_file_size : PrsoPluploadVars.max_file_size,
-						max_file_count: PrsoPluploadVars.max_files, // user can add no more then x files at a time
-						chunk_size: PrsoPluploadVars.chunking,
-						unique_names : true,
-						multiple_queues : true,
-						multipart_params : { 
-							'action': 'prso-plupload-submit', 
-							'currentFormID': PrsoPluploadVars.params.form_id,
-							'currentFieldID': PrsoPluploadVars.params.field_id,
-							'nonce': PrsoPluploadVars.params.nonce,
-						},
-				
-						// Specify what files to browse for
-						filters : [
-							{
-								title : "files", 
-								extensions : PrsoPluploadVars.filters.files
-							}
-						],
-				
-						// Flash settings
-						flash_swf_url : PrsoPluploadVars.flash_url,
-				
-						// Silverlight settings
-						silverlight_xap_url : PrsoPluploadVars.silverlight_url,
-						
-						//Post init events
-						init : {
-							Error: function(up, response) {
-								
-								
-							},
-							FileUploaded: function(up, file, response) {
-								
-								//Called when a file finishes uploading
-								
-								var obj = jQuery.parseJSON(response.response);
-								
-								//Detect error
-								if( obj.result === 'error' ) {
-									
-									//Alert user of error
-									up.trigger('Error', {
-										code : obj.error.code,
-										message : obj.error.message,
-										details : 'upload for' + file.name + ' failed.',
-										file : file
-									});
-									
-									
-								} else if( obj.result === 'success' ) {
-									
-									var inputField = '<input id="gform-plupload-'+ obj.file_uid +'" type="hidden" name="plupload['+ PrsoPluploadVars.params.field_id +'][]" value="'+ obj.success.file_id +'"/>';
-									
-									jQuery('#gform_' + PrsoPluploadVars.params.form_id).append(inputField);
-									
-								} else {
-									
-									//General error
-									up.trigger('Error', {
-										code : 300,
-										message : 'Server Error. File might be too large.',
-										details : 'upload for' + file.name + ' failed.',
-										file : file
-									});
-									
-								}
-								
-							},
-							FilesAdded: function(up, files) {
-							
-								//Remove files if max limit reached
-				                plupload.each(files, function(file) {
-				                	
-				                	//File added result
-				                	var file_added_result = true;
-				                	
-				                    if (up.files.length > PrsoPluploadVars.max_files) {
-				                        up.removeFile(file);
-				                        
-				                        file_added_result = false;
-				                    }
-				                    
-				                    //Prevent duplicate files
-				                    var upa = jQuery('#' + PrsoPluploadVars.element).plupload('getUploader');
-				                    var i = 0;
-				                    while (i <= upa.files.length) {
-				                        ultimo = upa.files.length;
-				                        if (ultimo > 1) {
-				                            if (i > 0) {
-				                                ultimo2 = ultimo - 1;
-				                                ii = i-1;
-				                                if (ultimo2 != ii) {
-				                                    if (up.files[ultimo - 1].name == upa.files[i-1].name) {
-				                                        up.removeFile(file);
-				                                        
-				                                        file_added_result = false;
-				                                    }
-				                                }
-				                            }
-				                        }
-				                        i++;
-				                    }
-				                    
-				                    //If file added then check if auto upload isset
-				                    if( file_added_result === true ) {
-				                    	if( PrsoPluploadVars.auto_upload === true ) {
-				                    		up.start();
-				                    	}
-				                    }
-				                    
-				                });
-				                
-				            },
-							FilesRemoved: function(up, files) {
-								
-								//Remove hidden gforms input for this file
-								jQuery("#gform-plupload-" + files[0].id).remove();
-							
-							}
-						}
-						
-					});
-					<?php
 				}
 			}
-			$pluploader_code = ob_get_contents();
-			ob_end_clean();
 			
-			ob_start();
-			?>
-			<script type="text/javascript">
-				jQuery(document).ready(function(){
-					<?php echo $pluploader_code; ?>
-				});
-			</script>
-			<?php
-			$output = ob_get_contents();
-			ob_end_clean();
+			if( !empty($local_vars) ) {
+				//Locallize vars for plupload script
+				wp_localize_script( 'prso-pluploader-init', $local_obj_name, $local_vars );
+			}
 			
 		}
-		
-		echo $output;
+
 	}
 	
 	/**
