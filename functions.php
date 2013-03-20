@@ -965,6 +965,9 @@ class PrsoGformsPluploaderFunctions extends PrsoGformsPluploaderAppController {
 		
 		if( isset($upload_id, $file_base_name, $entry['id'], $entry['form_id']) ) {
 			
+			//Allow devs to hook into the functio before getting wp info
+			do_action( 'prso_gform_pluploader_pre_insert_attachment' );
+			
 			//Cache info on the wp uploads dir
 			$wp_upload_dir = wp_upload_dir();
 			
