@@ -615,7 +615,7 @@ class PrsoGformsPluploaderFunctions extends PrsoGformsPluploaderAppController {
 					$local_vars[$field_id]['auto_upload'] 			= true;
 					
 					//Runtimes
-					$local_vars[$field_id]['runtimes'] 				= 'html5,browserplus,silverlight,gears,html4';
+					$local_vars[$field_id]['runtimes'] 				= 'flash,html5,browserplus,silverlight,gears,html4';
 					
 					//Request url - wp ajax request
 					$local_vars[$field_id]['wp_ajax_url'] 			= admin_url('admin-ajax.php');
