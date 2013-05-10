@@ -116,7 +116,7 @@ class qqFileUploader {
 	        }
         }
         
-        if (!is_writable($uploadDirectory) || !is_executable($uploadDirectory)){
+        if (!is_writable($uploadDirectory)){
             return array(
 	            	'result' 	=> 'error',
 	            	'file_uid'	=> $uuid,
@@ -242,7 +242,7 @@ class qqFileUploader {
             
             $partIndex = (int)$_REQUEST['chunk'];
 
-            if (!is_writable($chunksFolder) || !is_executable($uploadDirectory)){
+            if (!is_writable($chunksFolder)){
                 return array(
 	            	'result' 	=> 'error',
 	            	'file_uid'	=> $uuid,
