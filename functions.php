@@ -551,6 +551,13 @@ class PrsoGformsPluploaderFunctions extends PrsoGformsPluploaderAppController {
 				$args['validation']['sizeLimit'] = 1;
 			}
 			
+			//Cache max number of files option
+			$args['max_files'] = 2;
+			if( isset($field['prso_pluploader_max_files']) && !empty($field['prso_pluploader_max_files']) ) {
+				$max_files	 		= (int) $field['prso_pluploader_max_files'];
+				$args['max_files'] 	= $max_files;
+			}
+			
 			//Cache the file chunking options
 			$args['chunking']['enabled'] = FALSE;
 			if( isset($field['prso_pluploader_file_chunk']) && !empty($field['prso_pluploader_file_chunk']) ) {
@@ -560,6 +567,21 @@ class PrsoGformsPluploaderFunctions extends PrsoGformsPluploaderAppController {
 					$args['chunking']['enabled'] = '1mb';
 				}
 				
+			}
+			
+			//Cache auto upload option
+			$args['auto_upload'] = true;
+			if( isset($field['prso_pluploader_auto_upload']) && !empty($field['prso_pluploader_auto_upload']) ) {
+				
+				$auto_upload = esc_attr( $field['prso_pluploader_auto_upload'] );
+				
+				if( $auto_upload == 'true' ) {
+					$auto_upload = true;
+				} elseif( $auto_upload == 'false' ) {
+					$auto_upload = false;
+				}
+				
+				$args['auto_upload'] 	= $auto_upload;
 			}
 			
 			//Cache the unique field identifier Fine Uploader action
@@ -602,6 +624,7 @@ class PrsoGformsPluploaderFunctions extends PrsoGformsPluploaderAppController {
 			
 			//Loop each pluploader field and cache vars required to activate each one
 			foreach( $this->prso_pluploader_args as $field_id => $uploader_args ){
+				
 				//Check for minimum args
 				if( isset($uploader_args['element']) ) {
 					
@@ -609,10 +632,10 @@ class PrsoGformsPluploaderFunctions extends PrsoGformsPluploaderAppController {
 					$local_vars[$field_id]['element'] 				= $uploader_args['element'];
 					
 					//Cache max unmber of file allowed
-					$local_vars[$field_id]['max_files'] 			= 2;
+					$local_vars[$field_id]['max_files'] 			= $uploader_args['max_files'];
 					
 					//Auto upload when files added
-					$local_vars[$field_id]['auto_upload'] 			= true;
+					$local_vars[$field_id]['auto_upload'] 			= $uploader_args['auto_upload'];
 					
 					//Runtimes
 					$local_vars[$field_id]['runtimes'] 				= 'flash,html5,browserplus,silverlight,gears,html4';
